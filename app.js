@@ -414,6 +414,23 @@ app.post('/api/gemini/generate', async (req, res) => {
     }
 });
 
+// --- Manual webhook setup (for debugging) ---
+app.get('/set-webhook', async (req, res) => {
+    console.log('VERCEL_URL at /set-webhook:', VERCEL_URL);
+    if (!VERCEL_URL) {
+        return res.status(500).json({ error: 'VERCEL_URL is not set at runtime.' });
+    }
+    const WEBHOOK_URL = `https://${VERCEL_URL}/api/webhook`;
+    try {
+        await bot.setWebHook(WEBHOOK_URL);
+        console.log(`Webhook set to ${WEBHOOK_URL}`);
+        res.json({ success: true, webhook: WEBHOOK_URL });
+    } catch (err) {
+        console.error('Failed to set Telegram webhook:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 // =================================================================
 // 7. SERVER STARTUP
@@ -427,6 +444,7 @@ async function startServer() {
         await updateFuseSearch();
         app.listen(PORT, async () => {
             console.log(`🚀 Server is running on http://localhost:${PORT}`);
+            console.log('VERCEL_URL at startup:', VERCEL_URL);
             // Set Telegram webhook only if VERCEL_URL is set
             if (VERCEL_URL) {
                 const WEBHOOK_URL = `https://${VERCEL_URL}/api/webhook`;
