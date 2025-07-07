@@ -44,9 +44,6 @@ const sequelize = new Sequelize(DATABASE_URL, {
 });
 
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN);
-const WEBHOOK_URL = `https://${VERCEL_URL}/api/webhook`;
-bot.setWebHook(WEBHOOK_URL);
-console.log(`Webhook set to ${WEBHOOK_URL}`);
 
 // // Use this for local development:
 // const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
@@ -428,8 +425,20 @@ async function startServer() {
         await sequelize.sync({ alter: true });
         console.log('✅ All models were synchronized successfully.');
         await updateFuseSearch();
-        app.listen(PORT, () => {
+        app.listen(PORT, async () => {
             console.log(`🚀 Server is running on http://localhost:${PORT}`);
+            // Set Telegram webhook only if VERCEL_URL is set
+            if (VERCEL_URL) {
+                const WEBHOOK_URL = `https://${VERCEL_URL}/api/webhook`;
+                try {
+                    await bot.setWebHook(WEBHOOK_URL);
+                    console.log(`Webhook set to ${WEBHOOK_URL}`);
+                } catch (err) {
+                    console.error('Failed to set Telegram webhook:', err);
+                }
+            } else {
+                console.error('VERCEL_URL is not set. Cannot set Telegram webhook.');
+            }
         });
     } catch (error) {
         console.error('❌ Unable to start the server:', error);
