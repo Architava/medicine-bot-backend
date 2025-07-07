@@ -24,7 +24,7 @@ const {
     TELEGRAM_BOT_TOKEN,
     GEMINI_API_KEY, // <-- ADD THIS TO YOUR .env FILE
     PORT = 3001,
-    VERCEL_URL
+    PUBLIC_URL // <-- Use this for runtime webhook
 } = process.env;
 
 if (!DATABASE_URL || !TELEGRAM_BOT_TOKEN || !GEMINI_API_KEY) {
@@ -416,11 +416,11 @@ app.post('/api/gemini/generate', async (req, res) => {
 
 // --- Manual webhook setup (for debugging) ---
 app.get('/set-webhook', async (req, res) => {
-    console.log('VERCEL_URL at /set-webhook:', VERCEL_URL);
-    if (!VERCEL_URL) {
-        return res.status(500).json({ error: 'VERCEL_URL is not set at runtime.' });
+    console.log('PUBLIC_URL at /set-webhook:', PUBLIC_URL);
+    if (!PUBLIC_URL) {
+        return res.status(500).json({ error: 'PUBLIC_URL is not set at runtime.' });
     }
-    const WEBHOOK_URL = `https://${VERCEL_URL}/api/webhook`;
+    const WEBHOOK_URL = `https://${PUBLIC_URL}/api/webhook`;
     try {
         await bot.setWebHook(WEBHOOK_URL);
         console.log(`Webhook set to ${WEBHOOK_URL}`);
@@ -444,10 +444,10 @@ async function startServer() {
         await updateFuseSearch();
         app.listen(PORT, async () => {
             console.log(`🚀 Server is running on http://localhost:${PORT}`);
-            console.log('VERCEL_URL at startup:', VERCEL_URL);
-            // Set Telegram webhook only if VERCEL_URL is set
-            if (VERCEL_URL) {
-                const WEBHOOK_URL = `https://${VERCEL_URL}/api/webhook`;
+            console.log('PUBLIC_URL at startup:', PUBLIC_URL);
+            // Set Telegram webhook only if PUBLIC_URL is set
+            if (PUBLIC_URL) {
+                const WEBHOOK_URL = `https://${PUBLIC_URL}/api/webhook`;
                 try {
                     await bot.setWebHook(WEBHOOK_URL);
                     console.log(`Webhook set to ${WEBHOOK_URL}`);
@@ -455,7 +455,7 @@ async function startServer() {
                     console.error('Failed to set Telegram webhook:', err);
                 }
             } else {
-                console.error('VERCEL_URL is not set. Cannot set Telegram webhook.');
+                console.error('PUBLIC_URL is not set. Cannot set Telegram webhook.');
             }
         });
     } catch (error) {
